@@ -1,0 +1,49 @@
+---
+
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+          update_cache: yes
+
+- name: install all packages
+  apt:
+          name: "{{ packages }}"
+          vars:
+                  packages:
+                          - nmap
+                          - irssi
+                          - samba
+                          - ntfs-3g
+
+- name: create mount directory
+  file:
+          state: directory
+          path: /media/sam/backup
+          owner: pi
+          group: root
+          mode: 0700
+
+- name: link to home directory
+  file:
+          state: link
+          src: /media/sam/backup
+          dest: /home/pi/backup
+
+- name: append fstab
+  lineinfile:
+          path: /etc/fstab
+          line: '/dev/sda1       /media/sam/backup      ntfs    user,uid=1000,errors=recover,umask=077  0       0'
+          insertafter:
+
+- name: copy samba configuration
+  copy:
+          src: resources/samba/smb.conf
+          dest: /etc/samba/smb.conf
+          owner: root
+          group: root
+          mode: 0644
+
+- name: restart the dance          
+  service:
+          name: smbd
+          state: restarted
+
